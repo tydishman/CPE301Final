@@ -1,10 +1,6 @@
-/*!
-
-*/
 
 /*
-* Pin setups:
-*  @author Tyler Dishman
+* @author Tyler Dishman
 * @author Matthew Gaskell
 */
 
@@ -30,13 +26,14 @@ byte PORTA = 0x02;
 byte DDRA = 0x01;
 byte PINA = 0x00;
 // PA0:3 will be used for the LEDs
+// Yellow, Red, Green. Blue
 
 
 State currentState = DISABLED;
 
 
 void setup(){
-
+    *DDRA |= 0b00001111;
 }
 void loop(){
 
@@ -56,7 +53,7 @@ void loop(){
     default:
         break;
     }
-
+    driveLED(currentState);
     // ALL STATES OTHER THAN DISABLED
     if(currentState != DISABLED){
         /*
@@ -74,16 +71,27 @@ void loop(){
 
 // Helper functions
 Color driveLED(State currState){
-    switch (currentState)
+    switch (currState)
     {
     case DISABLED:
         // Yellow LED on
+        *PORTA &= 0b11110001; // turn other colors off
+        *PORTA |= 0b11110001; // set yellow LED
         break;
     case IDLE:
+        // Green LED on
+        *PORTA &= 0b11110100;
+        *PORTA |= 0b11110100; // set green LED
         break;
     case ERROR:
+        // Red LED on
+        *PORTA &= 0b11110010;
+        *PORTA |= 0b11110010; // set red LED
         break;
     case RUNNING:
+        // Blue LED on
+        *PORTA &= 0b11111000;
+        *PORTA |= 0b11111000; // set blue LED
         break;
     }
 }
