@@ -22,18 +22,20 @@ enum Color {
 };
 
 // LED pins
-byte PORTA = 0x02;
-byte DDRA = 0x01;
-byte PINA = 0x00;
+volatile unsigned byte* PORTA = (unsigned byte*) 0x02;
+volatile unsigned byte* DDRA = (unsigned byte*) 0x01;
+volatile unsigned byte* PINA = (unsigned byte*) 0x00;
 // PA0:3 will be used for the LEDs
 // Yellow, Red, Green. Blue
 
+// Status register
+volatile unsigned byte *mySREG = (unsigned byte*) 0x3f;
 
 State currentState = DISABLED;
 
 
 void setup(){
-    *DDRA |= 0b00001111;
+    *DDRA = 0b00001111; // sets those pins as outputs
 }
 void loop(){
 
@@ -41,7 +43,6 @@ void loop(){
     switch (currentState)
     {
     case DISABLED:
-        // Yellow LED on
         break;
     case IDLE:
         break;
@@ -94,4 +95,13 @@ Color driveLED(State currState){
         *PORTA |= 0b11111000; // set blue LED
         break;
     }
+}
+
+// external interrupt for a state change on INT5 (D3)
+ISR(INT5_vect){ 
+    byte statusReg = *mySREG;
+
+    // do interrupt stuff
+
+    *mySREG = statusReg;
 }
