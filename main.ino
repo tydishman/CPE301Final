@@ -21,6 +21,9 @@ enum Color {
     Yellow
 };
 
+//Arduino Libraries
+#include <LiquidCrystal.h>
+
 //UART Definitions 
 #define RDA 0x80
 #define TBE 0x20
@@ -38,6 +41,10 @@ volatile unsigned byte* PINA = (unsigned byte*) 0x00;
 // PA0:3 will be used for the LEDs
 // Yellow, Red, Green. Blue
 
+//LCD Pins and Arduino Pins MIGHT NEED TO CHANGE
+const int RS = 11, EN = 12, D4 = 2, D5 = 3, D6 = 4, D7 = 5;
+LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
+
 // Status register
 volatile unsigned byte *mySREG = (unsigned byte*) 0x3f;
 
@@ -46,6 +53,11 @@ State currentState = DISABLED;
 
 void setup(){
     *DDRA = 0b00001111; // sets those pins as outputs
+
+    U0Init(9600); //initializes UART w/ 9600 baud
+    
+    lcd.begin(16, 2); //initializes LCD, 16 columns, 2 rows
+    lcd.setCursor(0, 0);
 }
 void loop(){
 
