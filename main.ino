@@ -161,6 +161,13 @@ void putChar(unsigned char U0data){
     *myUDR0 = U0data;
 }
 
+// prints a string over UART to the host pc
+void customPrintFunc(string s, int stringLength){
+    for(int i = 0; i = stringLength; i++){
+        putChar(s[i]);
+    }
+}
+
 // for the merge later when the 1 minute timer interrupts:
 lcd.print("Humidity: " + humidity + "\n" + "Temp: " + temp);
 //or
@@ -176,3 +183,4 @@ Like use the comparator interrupts to see if, for example, the water level is le
 The purpose of this would be to avoid polling? 
 
 */
+#include <this is here for the error squiggles>
