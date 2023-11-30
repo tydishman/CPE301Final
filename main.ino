@@ -23,6 +23,9 @@ enum Color {
 
 //Arduino Libraries
 #include <LiquidCrystal.h>
+#include <Stepper.h>
+#include <dht.h>
+#include <rtc.h>
 
 //UART Definitions 
 #define RDA 0x80
@@ -48,7 +51,8 @@ LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 // Status register
 volatile unsigned byte *mySREG = (unsigned byte*) 0x3f;
 
-State currentState = DISABLED;
+State currentState = DISABLED; // global variable to indicate what state the program is currently in
+
 
 
 void setup(){
@@ -119,11 +123,16 @@ Color driveLED(State currState){
     }
 }
 
-// external interrupt for a state change on INT5 (D3)
+// external interrupt for a state change on INT5 (D3) (this will be the stop button)
 ISR(INT5_vect){ 
     byte statusReg = *mySREG;
 
     // do interrupt stuff
+    // set state to DISABLED
+    currentState = DISABLED;
+
+    // fan off
+
 
     *mySREG = statusReg;
 }
@@ -151,3 +160,19 @@ void putChar(unsigned char U0data){
     while((*myUCSR0A & TBE) == 0);
     *myUDR0 = U0data;
 }
+
+// for the merge later when the 1 minute timer interrupts:
+lcd.print("Humidity: " + humidity + "\n" + "Temp: " + temp);
+//or
+lcd.setCursor(0,0);
+lcd.print("Humidity: " + humidity);
+lcd.setCursor(1,0);
+lcd.print("Temp: " + temperature);
+
+/* How do we want to tackle state transitions?
+
+Interrupts?
+Like use the comparator interrupts to see if, for example, the water level is less than the threshold, and if so, during the interrupt we set the current state to ERROR
+The purpose of this would be to avoid polling? 
+
+*/
