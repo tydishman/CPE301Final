@@ -31,11 +31,16 @@ enum Color {
 #define RDA 0x80
 #define TBE 0x20
 //UART Variables
-volatile unsigned char *myUCSR0A = (unsigned char*)0x00C0;
-volatile unsigned char *myUSCR0B = (unsigned char*)0x00C1;
-volatile unsigned char *myUSCR0C = (unsigned char*)0x00C2;
-volatile unsigned int *myUBBR0 = (unsigned int*)0x00C4;
-volatile unsigned char *myUDR0 = (unsigned char*)0x00C6;
+volatile unsigned byte *myUCSR0A = (unsigned byte*)0x00C0;
+volatile unsigned byte *myUSCR0B = (unsigned byte*)0x00C1;
+volatile unsigned byte *myUSCR0C = (unsigned byte*)0x00C2;
+volatile unsigned byte *myUBBR0 = (unsigned byte*)0x00C4;
+volatile unsigned byte *myUDR0 = (unsigned byte*)0x00C6;
+
+
+// Analog Comparator Variables
+volatile unsigned byte *myACSR = (unsigned byte*) 0x50; // the analog comparator status register
+
 
 // LED pins
 volatile unsigned byte* PORTA = (unsigned byte*) 0x02;
@@ -62,6 +67,8 @@ void setup(){
     
     lcd.begin(16, 2); //initializes LCD, 16 columns, 2 rows
     lcd.setCursor(0, 0);
+
+    *myACSR |= 0b00000011;
 }
 void loop(){
 
@@ -128,11 +135,24 @@ ISR(INT5_vect){
     byte statusReg = *mySREG;
 
     // do interrupt stuff
+    if(currentState == DISABLED){
+        return;
+    }
     // set state to DISABLED
     currentState = DISABLED;
 
     // fan off
 
+
+    // end of interrupt
+    *mySREG = statusReg;
+}
+
+// interrupt for analog comparator (AIN0 is +, AIN1 is -); when AIN0 > AIN1, ACO is set. Interrupt can be configured to trigger on output rise, fall, or TOGGLE in this case
+ISR(ANA_COMP){
+    byte statusReg = *mySREG;
+
+    if(waterLevel )
 
     *mySREG = statusReg;
 }
