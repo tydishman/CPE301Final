@@ -41,6 +41,8 @@ volatile unsigned char *myUDR0 = (unsigned char*)0x00C6;
 // Analog Comparator Variables
 volatile unsigned char *myACSR = (unsigned char*) 0x50; // the analog comparator status register
 
+// External interrupt control registers
+volatile unsigned char *myEICRB = (unsigned char*)0x6A;
 
 // LED pins
 volatile unsigned char *myPORTA = (unsigned char*) 0x22;
@@ -68,6 +70,7 @@ State currentState = DISABLED; // global variable to indicate what state the pro
 void setup(){
     *myDDRA |= 0b00001111; // sets those pins as outputs
     
+    *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
 
     // U0Init(9600); //initializes UART w/ 9600 baud
     Serial.begin(9600);
@@ -111,15 +114,19 @@ void loop(){
 
    delay(2500);
    if(currentState == DISABLED){
+    *myPORTA &= 0b01111111;
     currentState = IDLE;
    }
    else if(currentState == IDLE){
+    *myPORTA &= 0b01111111;
     currentState = ERROR;
    }
    else if (currentState == ERROR){
+    *myPORTA &= 0b01111111;
     currentState = RUNNING;
    }
    else if(currentState == RUNNING){
+    *myPORTA &= 0b01111111;
     currentState = DISABLED;
    }
 
@@ -160,16 +167,19 @@ Color driveLED(State currState){
     }
 }
 
-// external interrupt for a state change on INT5 (D3) (this will be the stop button)
+// external interrupt for a rising edge on INT5 (D3) (this will be the stop button)
 ISR(INT5_vect){ 
     char statusReg = *mySREG;
 
-    // do interrupt stuff
-    if(currentState == DISABLED){
-        return;
-    }
+    // // do interrupt stuff
+    // if(currentState == DISABLED){
+    //     return;
+    // }
     // set state to DISABLED
     currentState = DISABLED;
+
+    *myPORTA |= 0b10000000;
+
 
     // fan off
 
