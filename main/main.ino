@@ -72,7 +72,7 @@ LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 // Status register
 volatile unsigned char *mySREG = (unsigned char*)0x3f;
 
-State currentState = DISABLED; // global variable to indicate what state the program is currently in
+State currentState; // global variable to indicate what state the program is currently in
 
 
 
@@ -88,9 +88,10 @@ void setup(){
     lcd.setCursor(0, 0);
 
 
-    *myACSR |= 0b00000011;
+    *myACSR |= 0b00000010;
 
     adc_init();
+    currentState = DISABLED;
 }
 void loop(){
 
@@ -196,9 +197,6 @@ ISR(INT5_vect){
     // set state to DISABLED
     currentState = IDLE;
 
-    *myPORTA |= 0b11111111;
-
-
     // fan off
 
 
@@ -209,6 +207,10 @@ ISR(INT5_vect){
 // // interrupt for analog comparator (AIN0 is +, AIN1 is -); when AIN0 > AIN1, ACO is set. Interrupt can be configured to trigger on output rise, fall, or TOGGLE in this case
 ISR(ANALOG_COMP_vect){
     char statusReg = *mySREG;
+
+
+
+    currentState = ERROR;
 
     *mySREG = statusReg;
 }
