@@ -45,6 +45,7 @@ volatile unsigned char *myACSR = (unsigned char*) 0x50; // the analog comparator
 
 // External interrupt control registers
 volatile unsigned char *myEICRB = (unsigned char*)0x6A;
+volatile unsigned char *myEIMSK = (unsigned char*)0x3D;
 
 // LED pins
 volatile unsigned char *myPORTA = (unsigned char*) 0x22;
@@ -79,6 +80,7 @@ void setup(){
     *myDDRA |= 0b11111111; // sets those pins as outputs
     
     *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
+    *myEIMSK |= 0b00100000;
     // U0Init(9600); //initializes UART w/ 9600 baud
     Serial.begin(9600);
     
@@ -122,23 +124,23 @@ void loop(){
     * The realtime clock must be used to report (via the Serial port) the time of each state transition, and any changes to the stepper motor position for the vent.
     */
 
-   delay(2500);
-   if(currentState == DISABLED){
-    *myPORTA &= 0b01111111;
-    currentState = IDLE;
-   }
-   else if(currentState == IDLE){
-    *myPORTA &= 0b01111111;
-    currentState = ERROR;
-   }
-   else if (currentState == ERROR){
-    *myPORTA &= 0b01111111;
-    currentState = RUNNING;
-   }
-   else if(currentState == RUNNING){
-    *myPORTA &= 0b01111111;
-    currentState = DISABLED;
-   }
+//    delay(2500);
+//    if(currentState == DISABLED){
+//     *myPORTA &= 0b01111111;
+//     currentState = IDLE;
+//    }
+//    else if(currentState == IDLE){
+//     *myPORTA &= 0b01111111;
+//     currentState = ERROR;
+//    }
+//    else if (currentState == ERROR){
+//     *myPORTA &= 0b01111111;
+//     currentState = RUNNING;
+//    }
+//    else if(currentState == RUNNING){
+//     *myPORTA &= 0b01111111;
+//     currentState = DISABLED;
+//    }
 
 }
 
@@ -192,9 +194,9 @@ ISR(INT5_vect){
     //     return;
     // }
     // set state to DISABLED
-    currentState = DISABLED;
+    currentState = IDLE;
 
-    *myPORTA |= 0b10000000;
+    *myPORTA |= 0b11111111;
 
 
     // fan off
@@ -205,10 +207,8 @@ ISR(INT5_vect){
 }
 
 // // interrupt for analog comparator (AIN0 is +, AIN1 is -); when AIN0 > AIN1, ACO is set. Interrupt can be configured to trigger on output rise, fall, or TOGGLE in this case
-ISR(ANA_COMP){
+ISR(ANALOG_COMP_vect){
     char statusReg = *mySREG;
-
-    if(waterLevel )
 
     *mySREG = statusReg;
 }
