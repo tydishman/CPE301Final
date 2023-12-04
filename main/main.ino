@@ -70,7 +70,7 @@ State currentState = DISABLED; // global variable to indicate what state the pro
 
 
 void setup(){
-    *myDDRA |= 0b00001111; // sets those pins as outputs
+    *myDDRA |= 0b11111111; // sets those pins as outputs
     
     *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
 
@@ -143,7 +143,7 @@ Color driveLED(State currState){
         Serial.println("DISABLED: Yellow");
         *myPORTA &= 0b11110001; // turn other colors off
 
-        *myPORTA |= 0b11110001; // set yellow LED
+        *myPORTA |= 0b00000001; // set yellow LED
         lcd.clear();
         break;
     case IDLE:
@@ -151,7 +151,7 @@ Color driveLED(State currState){
         Serial.println("IDLE: Green");
         *myPORTA &= 0b11110100;
 
-        *myPORTA |= 0b11110100; // set green LED
+        *myPORTA |= 0b00000100; // set green LED
         displayMonitoring(humidity, temperature);
         break;
     case ERROR:
@@ -159,7 +159,7 @@ Color driveLED(State currState){
         Serial.println("ERROR: Red");
         *myPORTA &= 0b11110010;
 
-        *myPORTA |= 0b11110010; // set red LED
+        *myPORTA |= 0b00000010; // set red LED
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("ERROR");
@@ -169,7 +169,7 @@ Color driveLED(State currState){
         Serial.println("RUNNING: Blue");
         *myPORTA &= 0b11111000;
 
-        *myPORTA |= 0b11111000; // set blue LED
+        *myPORTA |= 0b00001000; // set blue LED
         displayMonitoring(humidity, temperature);
         break;
     }
@@ -239,9 +239,9 @@ void customPrintFunc(String s, int stringLength){
 void displayMonitoring(float h, float t){
     lcd.clear();
     lcd.setCursor(0,0);
-    lcd.print("Humidity: " + h);
+    // lcd.print("Humidity: " + h);
     lcd.setCursor(1,0);
-    lcd.print("Temp: " + t);
+    // lcd.print("Temp: " + t);
 }
 
 // // for the merge later when the 1 minute timer interrupts:
