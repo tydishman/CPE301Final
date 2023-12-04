@@ -85,6 +85,7 @@ void setup(){
     lcd.begin(16, 2); //initializes LCD, 16 columns, 2 rows
     lcd.setCursor(0, 0);
 
+
     *myACSR |= 0b00000011;
 }
 void loop(){
@@ -202,13 +203,13 @@ ISR(INT5_vect){
 }
 
 // // interrupt for analog comparator (AIN0 is +, AIN1 is -); when AIN0 > AIN1, ACO is set. Interrupt can be configured to trigger on output rise, fall, or TOGGLE in this case
-// ISR(ANA_COMP){
-//     char statusReg = *mySREG;
+ISR(ANA_COMP){
+    char statusReg = *mySREG;
 
-//     if(waterLevel )
+    if(waterLevel )
 
-//     *mySREG = statusReg;
-// }
+    *mySREG = statusReg;
+}
 
 //Functions for the UART
 void U0Init(int U0baud){
