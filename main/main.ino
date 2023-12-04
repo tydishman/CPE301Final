@@ -73,7 +73,6 @@ void setup(){
     *myDDRA |= 0b11111111; // sets those pins as outputs
     
     *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
-
     // U0Init(9600); //initializes UART w/ 9600 baud
     Serial.begin(9600);
     
