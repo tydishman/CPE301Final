@@ -89,7 +89,6 @@ void loop(){
     default:
         break;
     }
-    Serial.print("Hello");
     driveLED(currentState);
     // ALL STATES OTHER THAN DISABLED
     if(currentState != DISABLED){
