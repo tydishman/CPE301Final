@@ -59,6 +59,7 @@ volatile unsigned char *myPORTE = (unsigned char*) 0x2E;
 volatile unsigned char *myDDRE = (unsigned char*) 0x2D;
 volatile unsigned char *myPINE = (unsigned char*) 0x2C;
 
+// F0 is used to passthrough water level sensor/threshold pot. to AC
 volatile unsigned char *myPORTF = (unsigned char*) 0x31;
 volatile unsigned char *myDDRF = (unsigned char*) 0x30;
 volatile unsigned char *myPINF = (unsigned char*) 0x2F;
@@ -82,7 +83,10 @@ State currentState; // global variable to indicate what state the program is cur
 
 void setup(){
     *myDDRA |= 0b00001111; // sets those pins as outputs
-    *myDDRG &= 0b11011111;
+    *myDDRF &= 0b11111110;
+
+    *myDDRE &= 0b11110111; // PE3 as input
+    *myDDRE |= 0b00000100; // PE2 as output to write to the AC
     
     *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
     *myEIMSK |= 0b00100000;
@@ -130,7 +134,7 @@ void loop(){
     * The realtime clock must be used to report (via the Serial port) the time of each state transition, and any changes to the stepper motor position for the vent.
     */
 
-    
+
 
 //    delay(2500);
 //    if(currentState == DISABLED){
@@ -149,7 +153,10 @@ void loop(){
 //     *myPORTA &= 0b01111111;
 //     currentState = DISABLED;
 //    }
+    int waterLevel = adc_read(*myPINF);
+    Serial.println(waterLevel);
 
+    analogWrite(0, waterLevel/4);
 }
 
 // Helper functions
