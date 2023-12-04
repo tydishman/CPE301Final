@@ -21,6 +21,8 @@ enum Color {
     Yellow
 };
 
+float humidity, temperature;
+
 //Arduino Libraries
 #include <LiquidCrystal.h>
 #include <Stepper.h>
@@ -94,7 +96,6 @@ void loop(){
     default:
         break;
     }
-    Serial.print("Hello");
     driveLED(currentState);
     // ALL STATES OTHER THAN DISABLED
     if(currentState != DISABLED){
@@ -136,6 +137,7 @@ Color driveLED(State currState){
         *myPORTA &= 0b11110001; // turn other colors off
 
         *myPORTA |= 0b11110001; // set yellow LED
+        lcd.clear();
         break;
     case IDLE:
         // Green LED on
@@ -143,6 +145,7 @@ Color driveLED(State currState){
         *myPORTA &= 0b11110100;
 
         *myPORTA |= 0b11110100; // set green LED
+        displayMonitoring(humidity, temperature);
         break;
     case ERROR:
         // Red LED on
@@ -150,6 +153,9 @@ Color driveLED(State currState){
         *myPORTA &= 0b11110010;
 
         *myPORTA |= 0b11110010; // set red LED
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("ERROR");
         break;
     case RUNNING:
         // Blue LED on
@@ -157,6 +163,7 @@ Color driveLED(State currState){
         *myPORTA &= 0b11111000;
 
         *myPORTA |= 0b11111000; // set blue LED
+        displayMonitoring(humidity, temperature);
         break;
     }
 }
@@ -217,6 +224,14 @@ void customPrintFunc(String s, int stringLength){
     for(int i = 0; i = stringLength; i++){
         putChar(s[i]);
     }
+}
+
+void displayMonitoring(float h, float t){
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("Humidity: " + h);
+    lcd.setCursor(1,0);
+    lcd.print("Temp: " + t);
 }
 
 // // for the merge later when the 1 minute timer interrupts:
