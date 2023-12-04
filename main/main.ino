@@ -58,6 +58,12 @@ volatile unsigned char *myPORTE = (unsigned char*) 0x2E;
 volatile unsigned char *myDDRE = (unsigned char*) 0x2D;
 volatile unsigned char *myPINE = (unsigned char*) 0x2C;
 
+//ADC Registers
+volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;
+volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
+volatile unsigned char* my_ADCSRA = (unsigned char*) 0x7A;
+volatile unsigned int* my_ADC_DATA = (unsigned int*) 0x78;
+
 //LCD Pins and Arduino Pins MIGHT NEED TO CHANGE
 const int RS = 11, EN = 12, D4 = 2, D5 = 3, D6 = 4, D7 = 5;
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
