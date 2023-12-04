@@ -81,7 +81,8 @@ State currentState; // global variable to indicate what state the program is cur
 
 
 void setup(){
-    *myDDRA |= 0b11111111; // sets those pins as outputs
+    *myDDRA |= 0b00001111; // sets those pins as outputs
+    *myDDRG &= 0b11011111;
     
     *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
     *myEIMSK |= 0b00100000;
@@ -128,6 +129,8 @@ void loop(){
     /*
     * The realtime clock must be used to report (via the Serial port) the time of each state transition, and any changes to the stepper motor position for the vent.
     */
+
+    
 
 //    delay(2500);
 //    if(currentState == DISABLED){
