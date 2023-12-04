@@ -59,6 +59,10 @@ volatile unsigned char *myPORTE = (unsigned char*) 0x2E;
 volatile unsigned char *myDDRE = (unsigned char*) 0x2D;
 volatile unsigned char *myPINE = (unsigned char*) 0x2C;
 
+volatile unsigned char *myPORTG = (unsigned char*) 0x34;
+volatile unsigned char *myDDRG = (unsigned char*) 0x33;
+volatile unsigned char *myPING = (unsigned char*) 0x32;
+
 //ADC Registers
 volatile unsigned char* my_ADMUX = (unsigned char*) 0x7C;
 volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
