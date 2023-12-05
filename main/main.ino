@@ -40,8 +40,14 @@ volatile unsigned char *myUBBR0 = (unsigned char*)0x00C4;
 volatile unsigned char *myUDR0 = (unsigned char*)0x00C6;
 
 
-// Analog Comparator Variables
+// Analog Comparator registers
 volatile unsigned char *myACSR = (unsigned char*) 0x50; // the analog comparator status register
+volatile unsigned char *myDIDR1 = (unsigned char*) 0x7F;
+// AC notes:
+/*
+The internal "bandgap" reference of 1.1 volts will be used as the threshold for the water. If this turns out to not be good enough, another solution will need to be used
+*/
+
 
 // External interrupt control registers
 volatile unsigned char *myEICRB = (unsigned char*)0x6A;
@@ -59,7 +65,7 @@ volatile unsigned char *myPORTE = (unsigned char*) 0x2E;
 volatile unsigned char *myDDRE = (unsigned char*) 0x2D;
 volatile unsigned char *myPINE = (unsigned char*) 0x2C;
 
-// F0 is used to passthrough water level sensor/threshold pot. to AC
+
 volatile unsigned char *myPORTF = (unsigned char*) 0x31;
 volatile unsigned char *myDDRF = (unsigned char*) 0x30;
 volatile unsigned char *myPINF = (unsigned char*) 0x2F;
@@ -77,7 +83,8 @@ LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 // Status register
 volatile unsigned char *mySREG = (unsigned char*)0x3f;
 
-State currentState; // global variable to indicate what state the program is currently in
+volatile State currentState; // global variable to indicate what state the program is currently in
+volatile bool stateChange; // global variable to indicate a state change has occurred
 
 
 
@@ -85,11 +92,10 @@ void setup(){
     *myDDRA |= 0b00001111; // sets those pins as outputs
     *myDDRF &= 0b11111110;
 
-    *myDDRE &= 0b11110111; // PE3 as input
-    *myDDRE |= 0b00000100; // PE2 as output to write to the AC
+    *myDDRE &= 0b11000111; // PE3:5 as inputs
     
     *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
-    *myEIMSK |= 0b00100000;
+    *myEIMSK |= 0b00110000;
     // U0Init(9600); //initializes UART w/ 9600 baud
     Serial.begin(9600);
     
@@ -97,12 +103,18 @@ void setup(){
     lcd.setCursor(0, 0);
 
 
-    *myACSR |= 0b00000010;
+    *myACSR |= 0b01001010; // sets bandgap reference, enables interrupts, and does comparator interrupt on falling edge
 
     adc_init();
     currentState = DISABLED;
 }
 void loop(){
+
+    if(stateChange){
+        enableDisableInterrupts(currentState);
+        
+        stateChange = false;
+    }
 
     // use a switch-case block to do state management
     switch (currentState)
@@ -153,10 +165,7 @@ void loop(){
 //     *myPORTA &= 0b01111111;
 //     currentState = DISABLED;
 //    }
-    int waterLevel = adc_read(*myPINF);
-    Serial.println(waterLevel);
 
-    analogWrite(0, waterLevel/4);
 }
 
 // Helper functions
@@ -200,21 +209,71 @@ Color driveLED(State currState){
     }
 }
 
-// external interrupt for a rising edge on INT5 (D3) (this will be the stop button)
+void enableDisableInterrupts(State currState){
+    switch (currState)
+    {
+    case DISABLED:
+        // disable threshold interrupt (comparator interrupt)
+        *myACSR &= 0b11110111;
+        // START/stop button interrupt enable
+        *myEIMSK |= 0b00100000;
+        // reset button interrupt disable
+        *myEIMSK &= 0b11101111;
+        break;
+    case IDLE:
+        // enable threshold interrupt (comparator interrupt)
+        *myACSR |= 0b00001000;
+        // start/STOP button interrupt enable
+        *myEIMSK |= 0b00100000;
+        // reset button interrupt disable
+        *myEIMSK &= 0b11101111;
+        break;
+    case ERROR:
+        // enable threshold interrupt (comparator interrupt)
+        *myACSR |= 0b00001000;
+        // start/STOP button interrupt enable
+        *myEIMSK |= 0b00100000;
+        // reset button interrupt enable
+        *myEIMSK |= 0b00010000;
+        break;
+    case RUNNING:
+        // enable threshold interrupt (comparator interrupt)
+        *myACSR |= 0b00001000;
+        // start/STOP button interrupt enable
+        *myEIMSK |= 0b00100000;
+        // reset button interrupt disable
+        *myEIMSK &= 0b11101111;
+        break;
+    default:
+        break;
+    }
+}
+
+// external interrupt for a rising edge on INT5 (D3) (this will be the START/STOP button)
 ISR(INT5_vect){ 
     char statusReg = *mySREG;
 
-    // // do interrupt stuff
-    // if(currentState == DISABLED){
-    //     return;
-    // }
-    // set state to DISABLED
-    currentState = IDLE;
+    if(currentState == DISABLED){
+        currentState = IDLE;
+        stateChange = true;
+    }
+    else{
+        currentState = DISABLED;
+        stateChange = true;
 
-    // fan off
+        // TURN FAN OFF
+    }
+    *mySREG = statusReg;
+}
+// external interrupt for a rising edge on INT4 (D2) (this will be the RESET button)
+ISR(INT4_vect){ 
+    char statusReg = *mySREG;
 
+    // if water level > baseline/bandgap voltage
+    if(adc_read(0x00) > analogRead(INTERNAL1V1)){
+        currentState = IDLE;
+    }
 
-    // end of interrupt
     *mySREG = statusReg;
 }
 
@@ -222,9 +281,8 @@ ISR(INT5_vect){
 ISR(ANALOG_COMP_vect){
     char statusReg = *mySREG;
 
-
-
     currentState = ERROR;
+    stateChange = true;
 
     *mySREG = statusReg;
 }
