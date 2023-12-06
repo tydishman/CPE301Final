@@ -130,23 +130,12 @@ void loop(){
     // GET TEMPERATURE HERE
     // THE FOLLOWING LINE IS TEMPORARY AND SHOULD BE REPLACED WITH A CALL TO THE TEMPERATURE SENSOR
     // temperature = adc_read(0x01);
-    int chk = DHT.read11(DHT11_PIN);
-    temperature = DHT.temperature;
-    humidity = DHT.humidity;
-    checkWaterLevel();
-    Serial.print("Temperature: ");
-    Serial.println(temperature);
-    Serial.print("Humidity: ");
-    Serial.println(humidity);
+    
+    waterLevelCheck();
+    temperatureCheck();
+   
 
-    if((currentState == IDLE) && (temperature > TEMP_THRESH)){
-        currentState = RUNNING;
-        stateChange = true;
-    }
-    else if((currentState == RUNNING) && (temperature <= TEMP_THRESH)){
-        currentState = IDLE;
-        stateChange = true;
-    }
+    
 
     if(stateChange){
         enableDisableInterrupts(currentState);
@@ -194,7 +183,7 @@ Color driveLED(State currState){
     {
     case DISABLED:
         // Yellow LED on
-        Serial.println("DISABLED: Yellow");
+        // Serial.println("DISABLED: Yellow");
         *myPORTA &= 0b11110001; // turn other colors off
 
         *myPORTA |= 0b00000001; // set yellow LED
@@ -202,7 +191,7 @@ Color driveLED(State currState){
         break;
     case IDLE:
         // Green LED on
-        Serial.println("IDLE: Green");
+        // Serial.println("IDLE: Green");
         *myPORTA &= 0b11110100;
 
         *myPORTA |= 0b00000100; // set green LED
@@ -210,7 +199,7 @@ Color driveLED(State currState){
         break;
     case ERROR:
         // Red LED on
-        Serial.println("ERROR: Red");
+        // Serial.println("ERROR: Red");
         *myPORTA &= 0b11110010;
 
         *myPORTA |= 0b00000010; // set red LED
@@ -220,7 +209,7 @@ Color driveLED(State currState){
         break;
     case RUNNING:
         // Blue LED on
-        Serial.println("RUNNING: Blue");
+        // Serial.println("RUNNING: Blue");
         *myPORTA &= 0b11111000;
 
         *myPORTA |= 0b00001000; // set blue LED
@@ -269,7 +258,11 @@ void enableDisableInterrupts(State currState){
     }
 }
 
-void checkWaterLevel(){
+void waterLevelCheck(){
+    int chk = DHT.read11(DHT11_PIN);
+    temperature = DHT.temperature;
+    humidity = DHT.humidity;
+    
     water_level = adc_read(0x00);
     Serial.print(water_level);
     if(currentState == IDLE || currentState == RUNNING){
@@ -277,6 +270,21 @@ void checkWaterLevel(){
             currentState = ERROR;
             stateChange = true;
         }
+    }
+}
+void temperatureCheck(){
+    Serial.print("Temp: ");
+    Serial.println(temperature);
+    Serial.print("Humidity: ");
+    Serial.println(humidity);
+
+    if((currentState == IDLE) && (temperature > TEMP_THRESH)){
+        currentState = RUNNING;
+        stateChange = true;
+    }
+    else if((currentState == RUNNING) && (temperature <= TEMP_THRESH)){
+        currentState = IDLE;
+        stateChange = true;
     }
 }
 
