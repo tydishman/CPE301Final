@@ -21,12 +21,12 @@ enum Color {
     Yellow
 };
 
-float humidity, temperature;
+float humidity, temperature, water_level;
 
 //Arduino Libraries
 #include <LiquidCrystal.h>
 #include <Stepper.h>
-// #include <dht.h>
+#include <dht.h>
 
 //INCLUDES FOR CLOCK, NEED TO DOWNLOAD ARDUINO LIBRARIES: Time and DS1307RTC
 #include <Wire.h>
@@ -101,6 +101,7 @@ volatile unsigned char *mySREG = (unsigned char*)0x3f;
 volatile State currentState; // global variable to indicate what state the program is currently in
 volatile bool stateChange; // global variable to indicate a state change has occurred
 const float TEMP_THRESH = 500.0; // the threshold for the temperature sensor, idk what to set at initially. This will be unable to change via hardware, and recompilation is required to reset this threshold
+const int WATER_THRESH = 100;
 
 
 void setup(){
@@ -118,7 +119,8 @@ void setup(){
     lcd.setCursor(0, 0);
 
 
-    *myACSR |= 0b01001010; // sets bandgap reference, enables interrupts, and does comparator interrupt on falling edge
+    // *myACSR |= 0b01001010; // sets bandgap reference, enables interrupts, and does comparator interrupt on falling edge
+    // disable analog comparator
 
     adc_init();
     currentState = DISABLED;
@@ -131,6 +133,7 @@ void loop(){
     int chk = DHT.read11(DHT11_PIN);
     temperature = DHT.temperature;
     humidity = DHT.humidity;
+    checkWaterLevel();
 
     if((currentState == IDLE) && (temperature > TEMP_THRESH)){
         currentState = RUNNING;
@@ -177,8 +180,7 @@ void loop(){
     * The realtime clock must be used to report (via the Serial port) the time of each state transition, and any changes to the stepper motor position for the vent.
     */
 
-   bigStep();
-   
+//    bigStep(true);
 
 }
 
@@ -208,9 +210,9 @@ Color driveLED(State currState){
         *myPORTA &= 0b11110010;
 
         *myPORTA |= 0b00000010; // set red LED
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("ERROR");
+        // lcd.clear();
+        // lcd.setCursor(0, 0);
+        // lcd.print("ERROR");
         break;
     case RUNNING:
         // Blue LED on
@@ -228,7 +230,7 @@ void enableDisableInterrupts(State currState){
     {
     case DISABLED:
         // disable threshold interrupt (comparator interrupt)
-        *myACSR &= 0b11110111;
+        // *myACSR &= 0b11110111;
         // START/stop button interrupt enable
         *myEIMSK |= 0b00100000;
         // reset button interrupt disable
@@ -236,7 +238,7 @@ void enableDisableInterrupts(State currState){
         break;
     case IDLE:
         // enable threshold interrupt (comparator interrupt)
-        *myACSR |= 0b00001000;
+        // *myACSR |= 0b00001000;
         // start/STOP button interrupt enable
         *myEIMSK |= 0b00100000;
         // reset button interrupt disable
@@ -244,7 +246,7 @@ void enableDisableInterrupts(State currState){
         break;
     case ERROR:
         // enable threshold interrupt (comparator interrupt)
-        *myACSR &= 0b11110111;
+        // *myACSR &= 0b11110111;
         // start/STOP button interrupt enable
         *myEIMSK |= 0b00100000;
         // reset button interrupt enable
@@ -252,7 +254,7 @@ void enableDisableInterrupts(State currState){
         break;
     case RUNNING:
         // enable threshold interrupt (comparator interrupt)
-        *myACSR |= 0b00001000;
+        // *myACSR |= 0b00001000;
         // start/STOP button interrupt enable
         *myEIMSK |= 0b00100000;
         // reset button interrupt disable
@@ -260,6 +262,17 @@ void enableDisableInterrupts(State currState){
         break;
     default:
         break;
+    }
+}
+
+void checkWaterLevel(){
+    water_level = adc_read(0x00);
+    Serial.print(water_level);
+    if(currentState == IDLE || currentState == RUNNING){
+        if(water_level < WATER_THRESH){
+            currentState = ERROR;
+            stateChange = true;
+        }
     }
 }
 
@@ -292,14 +305,14 @@ ISR(INT4_vect){
 }
 
 // // interrupt for analog comparator (AIN0 is +, AIN1 is -); when AIN0 > AIN1, ACO is set. Interrupt can be configured to trigger on output rise, fall, or TOGGLE in this case
-ISR(ANALOG_COMP_vect){
-    char statusReg = *mySREG;
+// ISR(ANALOG_COMP_vect){
+//     char statusReg = *mySREG;
 
-    currentState = ERROR;
-    stateChange = true;
+//     currentState = ERROR;
+//     stateChange = true;
 
-    *mySREG = statusReg;
-}
+//     *mySREG = statusReg;
+// }
 
 //Functions for the UART
 void U0Init(int U0baud){
