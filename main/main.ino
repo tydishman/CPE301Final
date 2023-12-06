@@ -80,6 +80,9 @@ volatile unsigned char *myPORTE = (unsigned char*) 0x2E;
 volatile unsigned char *myDDRE = (unsigned char*) 0x2D;
 volatile unsigned char *myPINE = (unsigned char*) 0x2C;
 
+volatile unsigned char *myPORTB = (unsigned char*) 0x25;
+volatile unsigned char *myDDRB = (unsigned char*) 0x24;
+volatile unsigned char *myPINB = (unsigned char*) 0x23;
 
 volatile unsigned char *myPORTF = (unsigned char*) 0x31;
 volatile unsigned char *myDDRF = (unsigned char*) 0x30;
@@ -109,6 +112,8 @@ void setup(){
     *myDDRF &= 0b11111110;
 
     *myDDRE &= 0b11000111; // PE3:5 as inputs
+
+    *myDDRB &= 0b00111111; //PB6:7 as inputs 
     
     *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
     *myEIMSK |= 0b00110000;
@@ -288,17 +293,12 @@ void temperatureCheck(){
     }
 }
 void ventCheck(){
-    int dir = adc_read(0x01);
-    Serial.print("Dir: ");
-    Serial.println(dir);
-
-    if(dir < 266){
+    if(*myPINB & 0x40){
         bigStep(true);
     }
-    else if(dir >= 533){
+    else if(*myPINB & 0x80){
         bigStep(false);
     }
-
 }
 
 
