@@ -34,6 +34,9 @@ float humidity, temperature;
 // #include <TimeLib.h>
 // #include <DS1307RTC.h>
 
+//This here declaration shouldn't be necessary, but if clock doesn't work, uncomment this line
+// tmElements_t tm;
+
 //UART Definitions 
 #define RDA 0x80
 #define TBE 0x20
