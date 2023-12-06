@@ -171,7 +171,7 @@ void loop(){
     * The realtime clock must be used to report (via the Serial port) the time of each state transition, and any changes to the stepper motor position for the vent.
     */
 
-
+   bigStep();
    
 
 }
