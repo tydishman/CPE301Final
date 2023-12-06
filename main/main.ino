@@ -33,9 +33,12 @@ float humidity, temperature;
 #include <TimeLib.h>
 #include <DS1307RTC.h>
 
+//Temp/Humidity Sensor
+dht DHT;
+#define DHT11_PIN 7
 
+//Stepper Initialization
 const int stepsPerRev = 2038;
-//Initialize stepper, feel free to change pin #'s if differing pins used 
 Stepper myStepper = Stepper(stepsPerRev, 8, 10, 9, 11);
 
 //This here declaration shouldn't be necessary, but if clock doesn't work, uncomment this line
@@ -124,7 +127,10 @@ void loop(){
 
     // GET TEMPERATURE HERE
     // THE FOLLOWING LINE IS TEMPORARY AND SHOULD BE REPLACED WITH A CALL TO THE TEMPERATURE SENSOR
-    temperature = adc_read(0x01);
+    // temperature = adc_read(0x01);
+    int chk = DHT.read11(DHT11_PIN);
+    temperature = DHT.temperature;
+    humidity = DHT.humidity;
 
     if((currentState == IDLE) && (temperature > TEMP_THRESH)){
         currentState = RUNNING;
@@ -408,15 +414,18 @@ void print2digits(int number) {
 }
 
 //Stepper function 
-void bigStep(){
-    myStepper.setSpeed(5);
-    myStepper.step(stepsPerRev);
-    delay(1000);
-
-    myStepper.setSpeed(10);
-    myStepper.step(-stepsPerRev);
-    delay(1000);
+void bigStep(bool open){
+    if(open){
+        myStepper.setSpeed(5);
+        myStepper.step(-stepsPerRev);
+    }
+    else{
+        myStepper.setSpeed(10);
+        myStepper.step(stepsPerRev);
+    }
 }
+
+
 
 // // for the merge later when the 1 minute timer interrupts:
 // lcd.print("Humidity: " + humidity + "\n" + "Temp: " + temp);
