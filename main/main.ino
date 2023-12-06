@@ -99,9 +99,9 @@ LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 volatile unsigned char *mySREG = (unsigned char*)0x3f;
 
 volatile State currentState; // global variable to indicate what state the program is currently in
-volatile bool stateChange; // global variable to indicate a state change has occurred
+volatile bool stateChange = true; // global variable to indicate a state change has occurred
 const float TEMP_THRESH = 21.0; // the threshold for the temperature sensor, idk what to set at initially. This will be unable to change via hardware, and recompilation is required to reset this threshold
-const int WATER_THRESH = 100;
+const int WATER_THRESH = 250;
 
 
 void setup(){
@@ -131,8 +131,8 @@ void loop(){
     // THE FOLLOWING LINE IS TEMPORARY AND SHOULD BE REPLACED WITH A CALL TO THE TEMPERATURE SENSOR
     // temperature = adc_read(0x01);
     
-    // waterLevelCheck();
-    // temperatureCheck();
+    waterLevelCheck();
+    temperatureCheck();
     ventCheck();
 
     
@@ -167,6 +167,14 @@ void loop(){
         – Stop button should turn fan motor off (if on) and system should go to DISABLED state
         */
     }
+
+    // myStepper.setSpeed(15);
+
+    // Serial.println("POS");
+    // myStepper.step(stepsPerRev);
+
+    // Serial.println("NEG");
+    // myStepper.step(-stepsPerRev);
 
     // ALL STATES
     /*
@@ -264,7 +272,8 @@ void waterLevelCheck(){
     humidity = DHT.humidity;
     
     water_level = adc_read(0x00);
-    Serial.print(water_level);
+    Serial.print("Water level: ");
+    Serial.println(water_level);
     if(currentState == IDLE || currentState == RUNNING){
         if(water_level < WATER_THRESH){
             currentState = ERROR;
@@ -292,10 +301,10 @@ void ventCheck(){
     Serial.print("Dir: ");
     Serial.println(dir);
 
-    if(dir < 266){
+    if(dir < DIR_MAX/3){
         bigStep(true);
     }
-    else if(dir >= 533){
+    else if(dir >= 2*DIR_MAX/3){
         bigStep(false);
     }
 
@@ -454,13 +463,14 @@ void print2digits(int number) {
 
 //Stepper function 
 void bigStep(bool open){
+    myStepper.setSpeed(10);
     if(open){
-        myStepper.setSpeed(1023);
-        myStepper.step(-15);
+        Serial.println("OPEN");
+        myStepper.step(-stepsPerRev/36);
     }
     else{
-        myStepper.setSpeed(1023);
-        myStepper.step(15);
+        Serial.println("CLOSE");
+        myStepper.step(stepsPerRev/36);
     }
 }
 
