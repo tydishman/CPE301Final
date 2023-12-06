@@ -134,6 +134,10 @@ void loop(){
     temperature = DHT.temperature;
     humidity = DHT.humidity;
     checkWaterLevel();
+    Serial.print("Temperature: ");
+    Serial.println(temperature);
+    Serial.print("Humidity: ");
+    Serial.println(humidity);
 
     if((currentState == IDLE) && (temperature > TEMP_THRESH)){
         currentState = RUNNING;
