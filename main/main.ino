@@ -29,6 +29,11 @@ float humidity, temperature;
 // #include <dht.h>
 // #include <rtc.h>
 
+//INCLUDES FOR CLOCK, NEED TO DOWNLOAD ARDUINO LIBRARIES: Time and DS1307RTC
+// #include <Wire.h>
+// #include <TimeLib.h>
+// #include <DS1307RTC.h>
+
 //UART Definitions 
 #define RDA 0x80
 #define TBE 0x20
@@ -361,6 +366,38 @@ unsigned int adc_read(unsigned char adc_channel_num)
   while((*my_ADCSRA & 0x40) != 0);
   // return the result in the ADC data register
   return *my_ADC_DATA;
+}
+
+//Clock function: prints the real time using the DS1307 RTC, in hours:minutes:seconds
+//FOR THIS TO WORK INITAL CLOCK SET NEEDS TO RUN, SHOULD ONLY HAVE TO HAPPEN ONCE EVER, RUN timerInitializationCode
+void reportTime(){
+    tmElements_t tm;
+    
+    if(RTC.read(tm)){
+        print2digits(tm.Hour);
+        putChar(':');
+        print2digits(tm.Minute);
+        putChar(':');
+        print2digits(tm.Second);
+        putChar('\n');
+    }
+}
+
+//Clock function: takes the number of hours, minutes, seconds, and separates the two numbers, converts to char, and then sents them through the UART. 
+void print2digits(int number) {
+  if (number >= 0 && number < 10) {
+    putChar('0');
+    char numToChar = number + '0';
+    putChar(numToChar);
+  }
+  else{
+    int numTen = number / 10;
+    int numOne = number % 10;
+    char numToCharTen = numTen + '0';
+    char numToCharOne = numOne + '0';
+    putChar(numToCharTen);
+    putChar(numToCharOne);
+  }
 }
 
 // // for the merge later when the 1 minute timer interrupts:
