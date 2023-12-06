@@ -33,6 +33,11 @@ float humidity, temperature;
 #include <TimeLib.h>
 #include <DS1307RTC.h>
 
+
+const int stepsPerRev = 2038;
+//Initialize stepper, feel free to change pin #'s if differing pins used 
+Stepper myStepper = Stepper(stepsPerRev, 8, 10, 9, 11);
+
 //This here declaration shouldn't be necessary, but if clock doesn't work, uncomment this line
 tmElements_t tm;
 
@@ -400,6 +405,17 @@ void print2digits(int number) {
     putChar(numToCharTen);
     putChar(numToCharOne);
   }
+}
+
+//Stepper function 
+void bigStep(){
+    myStepper.setSpeed(5);
+    myStepper.step(stepsPerRev);
+    delay(1000);
+
+    myStepper.setSpeed(10);
+    myStepper.step(-stepsPerRev);
+    delay(1000);
 }
 
 // // for the merge later when the 1 minute timer interrupts:
