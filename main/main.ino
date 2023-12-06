@@ -131,6 +131,10 @@ void loop(){
     int chk = DHT.read11(DHT11_PIN);
     temperature = DHT.temperature;
     humidity = DHT.humidity;
+    Serial.print("Temperature: ");
+    Serial.println(temperature);
+    Serial.print("Humidity: ");
+    Serial.println(humidity);
 
     if((currentState == IDLE) && (temperature > TEMP_THRESH)){
         currentState = RUNNING;
