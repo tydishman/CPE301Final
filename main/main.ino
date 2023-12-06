@@ -27,12 +27,11 @@ float humidity, temperature;
 #include <LiquidCrystal.h>
 #include <Stepper.h>
 // #include <dht.h>
-// #include <rtc.h>
 
 //INCLUDES FOR CLOCK, NEED TO DOWNLOAD ARDUINO LIBRARIES: Time and DS1307RTC
-// #include <Wire.h>
-// #include <TimeLib.h>
-// #include <DS1307RTC.h>
+#include <Wire.h>
+#include <TimeLib.h>
+#include <DS1307RTC.h>
 
 //Temp/Humidity Sensor
 dht DHT;
@@ -43,7 +42,7 @@ const int stepsPerRev = 2038;
 Stepper myStepper = Stepper(stepsPerRev, 8, 10, 9, 11);
 
 //This here declaration shouldn't be necessary, but if clock doesn't work, uncomment this line
-// tmElements_t tm;
+tmElements_t tm;
 
 //UART Definitions 
 #define RDA 0x80
@@ -245,7 +244,7 @@ void enableDisableInterrupts(State currState){
         break;
     case ERROR:
         // enable threshold interrupt (comparator interrupt)
-        *myACSR |= 0b00001000;
+        *myACSR &= 0b11110111;
         // start/STOP button interrupt enable
         *myEIMSK |= 0b00100000;
         // reset button interrupt enable
