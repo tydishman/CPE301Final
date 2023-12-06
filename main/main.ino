@@ -8,6 +8,16 @@
 // https://ww1.microchip.com/downloads/en/devicedoc/atmel-2549-8-bit-avr-microcontroller-atmega640-1280-1281-2560-2561_datasheet.pdf
 
 
+/*
+TODO:
+- RTC module
+- LCD display
+- Servo motor/fan
+ Matt's temp sensor
+
+*/
+
+
 enum State {
     DISABLED,
     IDLE,
