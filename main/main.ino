@@ -100,7 +100,7 @@ volatile unsigned char *mySREG = (unsigned char*)0x3f;
 
 volatile State currentState; // global variable to indicate what state the program is currently in
 volatile bool stateChange; // global variable to indicate a state change has occurred
-const float TEMP_THRESH = 500.0; // the threshold for the temperature sensor, idk what to set at initially. This will be unable to change via hardware, and recompilation is required to reset this threshold
+const float TEMP_THRESH = 21.0; // the threshold for the temperature sensor, idk what to set at initially. This will be unable to change via hardware, and recompilation is required to reset this threshold
 const int WATER_THRESH = 100;
 
 
