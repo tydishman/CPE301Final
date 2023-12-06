@@ -120,7 +120,7 @@ void setup(){
 
 
     // *myACSR |= 0b01001010; // sets bandgap reference, enables interrupts, and does comparator interrupt on falling edge
-    // disable analog comparator
+    *myACSR |= 0b10000000; // disable analog comparator
 
     adc_init();
     currentState = DISABLED;
@@ -131,9 +131,9 @@ void loop(){
     // THE FOLLOWING LINE IS TEMPORARY AND SHOULD BE REPLACED WITH A CALL TO THE TEMPERATURE SENSOR
     // temperature = adc_read(0x01);
     
-    waterLevelCheck();
-    temperatureCheck();
-   
+    // waterLevelCheck();
+    // temperatureCheck();
+    ventCheck();
 
     
 
@@ -287,6 +287,20 @@ void temperatureCheck(){
         stateChange = true;
     }
 }
+void ventCheck(){
+    int dir = adc_read(0x01);
+    Serial.print("Dir: ");
+    Serial.println(dir);
+
+    if(dir < 266){
+        bigStep(true);
+    }
+    else if(dir >= 533){
+        bigStep(false);
+    }
+
+}
+
 
 // external interrupt for a rising edge on INT5 (D3) (this will be the START/STOP button)
 ISR(INT5_vect){ 
@@ -441,12 +455,12 @@ void print2digits(int number) {
 //Stepper function 
 void bigStep(bool open){
     if(open){
-        myStepper.setSpeed(5);
-        myStepper.step(-stepsPerRev);
+        myStepper.setSpeed(1023);
+        myStepper.step(-15);
     }
     else{
-        myStepper.setSpeed(10);
-        myStepper.step(stepsPerRev);
+        myStepper.setSpeed(1023);
+        myStepper.step(15);
     }
 }
 
