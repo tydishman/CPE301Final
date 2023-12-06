@@ -37,7 +37,7 @@ float humidity, temperature;
 
 const int stepsPerRev = 2038;
 //Initialize stepper, feel free to change pin #'s if differing pins used 
-Stepper myStepper = Stepper(stepsPerRev, 8, 9, 10, 11);
+Stepper myStepper = Stepper(stepsPerRev, 8, 10, 9, 11);
 
 //This here declaration shouldn't be necessary, but if clock doesn't work, uncomment this line
 // tmElements_t tm;
