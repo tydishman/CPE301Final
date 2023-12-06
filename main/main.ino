@@ -85,7 +85,7 @@ volatile unsigned char *mySREG = (unsigned char*)0x3f;
 
 volatile State currentState; // global variable to indicate what state the program is currently in
 volatile bool stateChange; // global variable to indicate a state change has occurred
-
+const float TEMP_THRESH = 500.0; // the threshold for the temperature sensor, idk what to set at initially. This will be unable to change via hardware, and recompilation is required to reset this threshold
 
 
 void setup(){
@@ -109,6 +109,19 @@ void setup(){
     currentState = DISABLED;
 }
 void loop(){
+
+    // GET TEMPERATURE HERE
+    // THE FOLLOWING LINE IS TEMPORARY AND SHOULD BE REPLACED WITH A CALL TO THE TEMPERATURE SENSOR
+    temperature = adc_read(0x01);
+
+    if((currentState == IDLE) && (temperature > TEMP_THRESH)){
+        currentState = RUNNING;
+        stateChange = true;
+    }
+    else if((currentState == RUNNING) && (temperature <= TEMP_THRESH)){
+        currentState = IDLE;
+        stateChange = true;
+    }
 
     if(stateChange){
         enableDisableInterrupts(currentState);
@@ -147,24 +160,7 @@ void loop(){
     */
 
 
-
-//    delay(2500);
-//    if(currentState == DISABLED){
-//     *myPORTA &= 0b01111111;
-//     currentState = IDLE;
-//    }
-//    else if(currentState == IDLE){
-//     *myPORTA &= 0b01111111;
-//     currentState = ERROR;
-//    }
-//    else if (currentState == ERROR){
-//     *myPORTA &= 0b01111111;
-//     currentState = RUNNING;
-//    }
-//    else if(currentState == RUNNING){
-//     *myPORTA &= 0b01111111;
-//     currentState = DISABLED;
-//    }
+   
 
 }
 
