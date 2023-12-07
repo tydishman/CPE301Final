@@ -142,12 +142,7 @@ void setup(){
     adc_init();
     currentState = DISABLED;
 }
-void loop(){
-
-    // GET TEMPERATURE HERE
-    // THE FOLLOWING LINE IS TEMPORARY AND SHOULD BE REPLACED WITH A CALL TO THE TEMPERATURE SENSOR
-    // temperature = adc_read(0x01);
-    
+void loop(){    
     waterLevelCheck();
     temperatureCheck();
     ventCheck();
@@ -167,13 +162,13 @@ void loop(){
     {
     case DISABLED:
         fanControl(false);
-        lcd.clear();
+        // lcd.clear();
 
         // Serial.println("DISABLED");
         break;
     case IDLE:
         fanControl(false);
-        displayMonitoring(humidity, temperature);
+        // displayMonitoring(humidity, temperature);
 
         // Serial.println("IDLE");
         break;
@@ -184,7 +179,7 @@ void loop(){
         break;
     case RUNNING:
         fanControl(true);
-        displayMonitoring(humidity, temperature);
+        // displayMonitoring(humidity, temperature);
 
         // Serial.println("RUNNING");
         break;
@@ -201,11 +196,11 @@ void loop(){
         – Stop button should turn fan motor off (if on) and system should go to DISABLED state
         */
 
-        if(millis() - lastMillis >= 60000){
-            lastMillis = millis();
-            // Update LCD screen
-            // displayMonitoring(humidity, temperature);
-        }
+        // if(millis() - lastMillis >= 60000){
+        //     lastMillis = millis();
+        //     // Update LCD screen
+        //     // displayMonitoring(humidity, temperature);
+        // }
     }
 
     // myStepper.setSpeed(15);
@@ -285,8 +280,8 @@ void enableDisableInterrupts(State currState){
     case ERROR:
         // enable threshold interrupt (comparator interrupt)
         // *myACSR &= 0b11110111;
-        // start/STOP button interrupt disable
-        *myEIMSK &= 0b11011111;
+        // start/STOP button interrupt enable
+        *myEIMSK |= 0b00100000;
         // reset button interrupt enable
         *myEIMSK |= 0b00010000;
         break;
@@ -355,11 +350,11 @@ ISR(INT5_vect){
         currentState = IDLE;
         stateChange = true;
     }
-    else if(currentState != ERROR){
+    else{
         currentState = DISABLED;
         stateChange = true;
-
     }
+    
     *mySREG = statusReg;
 }
 // external interrupt for a rising edge on INT4 (D2) (this will be the RESET button)
@@ -367,7 +362,7 @@ ISR(INT4_vect){
     char statusReg = *mySREG;
 
     // if water level >= threshold
-    if((currentState == ERROR)){ //  && (adc_read(0x00) >= WATER_THRESH)
+    if((currentState == ERROR) && (adc_read(0x00) >= WATER_THRESH)){ //  && (adc_read(0x00) >= WATER_THRESH)
         currentState = DISABLED;
         stateChange = true;
     }
