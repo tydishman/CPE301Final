@@ -113,7 +113,7 @@ volatile unsigned char *mySREG = (unsigned char*)0x3f;
 
 volatile State currentState; // global variable to indicate what state the program is currently in
 volatile bool stateChange = true; // global variable to indicate a state change has occurred
-const float TEMP_THRESH = 15.0; // the threshold for the temperature sensor, idk what to set at initially. This will be unable to change via hardware, and recompilation is required to reset this threshold
+const float TEMP_THRESH = 18.0; // the threshold for the temperature sensor, idk what to set at initially. This will be unable to change via hardware, and recompilation is required to reset this threshold
 const int WATER_THRESH = 100;
 unsigned long lastMillis = 0;
 
@@ -129,8 +129,8 @@ void setup(){
     
     *myEICRB |= 0b00001111; // rising edge on the interrupt button does interrupt
     *myEIMSK |= 0b00110000;
-    // U0Init(9600); //initializes UART w/ 9600 baud
-    Serial.begin(9600);
+    U0Init(9600); //initializes UART w/ 9600 baud
+    // Serial.begin(9600);
     
     lcd.begin(16, 2); //initializes LCD, 16 columns, 2 rows
     lcd.setCursor(0, 0);
@@ -141,13 +141,13 @@ void setup(){
 
     adc_init();
     currentState = DISABLED;
+    customPrintFunc("UART initialized.\n",19);
 }
 void loop(){    
     waterLevelCheck();
     temperatureCheck();
     ventCheck();
 
-    
 
     if(stateChange){
         enableDisableInterrupts(currentState);
@@ -262,6 +262,7 @@ Color driveLED(State currState){
 }
 
 void enableDisableInterrupts(State currState){
+    customPrintFunc("STATE CHANGE: ", 15);
     switch (currState)
     {
     case DISABLED:
@@ -271,6 +272,9 @@ void enableDisableInterrupts(State currState){
         *myEIMSK |= 0b00100000;
         // reset button interrupt disable
         *myEIMSK &= 0b11101111;
+
+        customPrintFunc("DISABLED", 9);
+
         break;
     case IDLE:
         // enable threshold interrupt (comparator interrupt)
@@ -279,6 +283,9 @@ void enableDisableInterrupts(State currState){
         *myEIMSK |= 0b00100000;
         // reset button interrupt disable
         *myEIMSK &= 0b11101111;
+
+        customPrintFunc("IDLE", 4);
+
         break;
     case ERROR:
         // enable threshold interrupt (comparator interrupt)
@@ -287,6 +294,9 @@ void enableDisableInterrupts(State currState){
         *myEIMSK |= 0b00100000;
         // reset button interrupt enable
         *myEIMSK |= 0b00010000;
+
+        customPrintFunc("ERROR", 5);
+
         break;
     case RUNNING:
         // enable threshold interrupt (comparator interrupt)
@@ -295,10 +305,16 @@ void enableDisableInterrupts(State currState){
         *myEIMSK |= 0b00100000;
         // reset button interrupt disable
         *myEIMSK &= 0b11101111;
+
+        customPrintFunc("RUNNING", 8);
+
         break;
     default:
         break;
     }
+    customPrintFunc(": ", 2);
+    reportTime();
+    // report time automatically writes a newline after
 }
 
 void waterLevelCheck(){
@@ -307,8 +323,8 @@ void waterLevelCheck(){
     humidity = DHT.humidity;
     
     water_level = adc_read(0x00);
-    Serial.print("Water level: ");
-    Serial.println(water_level);
+    // Serial.print("Water level: ");
+    // Serial.println(water_level);
     if(currentState == IDLE || currentState == RUNNING){
         if(water_level < WATER_THRESH){
             currentState = ERROR;
@@ -317,10 +333,10 @@ void waterLevelCheck(){
     }
 }
 void temperatureCheck(){
-    Serial.print("Temp: ");
-    Serial.println(temperature);
+    // Serial.print("Temp: ");
+    // Serial.println(temperature);
     // Serial.print("Humidity: ");
-    Serial.println(humidity);
+    // Serial.println(humidity);
 
     if((currentState == IDLE) && (temperature > TEMP_THRESH)){
         currentState = RUNNING;
@@ -366,7 +382,7 @@ ISR(INT4_vect){
 
     // if water level >= threshold
     if((currentState == ERROR) && (adc_read(0x00) >= WATER_THRESH)){ //  && (adc_read(0x00) >= WATER_THRESH)
-        currentState = DISABLED;
+        currentState = IDLE;
         stateChange = true;
     }
 
@@ -409,7 +425,7 @@ void putChar(unsigned char U0data){
 
 // prints a string over UART to the host pc
 void customPrintFunc(String s, int stringLength){
-    for(int i = 0; i = stringLength; i++){
+    for(int i = 0; i < stringLength; i++){
         putChar(s[i]);
     }
 }
@@ -503,11 +519,11 @@ void print2digits(int number) {
 void bigStep(bool open){
     myStepper.setSpeed(10);
     if(open){
-        Serial.println("OPEN");
+        // Serial.println("OPEN");
         myStepper.step(-stepsPerRev/36);
     }
     else{
-        Serial.println("CLOSE");
+        // Serial.println("CLOSE");
         myStepper.step(stepsPerRev/36);
     }
 }
