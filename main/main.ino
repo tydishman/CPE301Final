@@ -120,6 +120,7 @@ unsigned long lastMillis = 0;
 
 
 void setup(){
+    *mySREG |= 0b10000000; // enables global interrupts
     *myDDRA |= 0b00001111; // sets those pins as outputs
     *myDDRF &= 0b11111110;
 
@@ -128,7 +129,7 @@ void setup(){
     *myDDRB &= 0b00111111; //PB6:7 as inputs , PB0:1 are outputs (fan controller)
     
     *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
-    *myEIMSK |= 0b00110000;
+    // *myEIMSK |= 0b00110000;
     // U0Init(9600); //initializes UART w/ 9600 baud
     Serial.begin(9600);
     
@@ -285,8 +286,8 @@ void enableDisableInterrupts(State currState){
     case ERROR:
         // enable threshold interrupt (comparator interrupt)
         // *myACSR &= 0b11110111;
-        // start/STOP button interrupt enable
-        *myEIMSK |= 0b00100000;
+        // start/STOP button interrupt disable
+        *myEIMSK &= 0b11011111;
         // reset button interrupt enable
         *myEIMSK |= 0b00010000;
         break;
@@ -334,10 +335,14 @@ void temperatureCheck(){
     }
 }
 void ventCheck(){
-    if(*myPINB & 0x40){
+    if(currentState == ERROR){
+        return;
+    }
+
+    if(*myPINB & 0b00000100){
         bigStep(true);
     }
-    else if(*myPINB & 0x80){
+    else if(*myPINB & 0b00001000){
         bigStep(false);
     }
 }
@@ -351,11 +356,10 @@ ISR(INT5_vect){
         currentState = IDLE;
         stateChange = true;
     }
-    else{
+    else if(currentState != ERROR){
         currentState = DISABLED;
         stateChange = true;
 
-        // TURN FAN OFF
     }
     *mySREG = statusReg;
 }
@@ -363,8 +367,8 @@ ISR(INT5_vect){
 ISR(INT4_vect){ 
     char statusReg = *mySREG;
 
-    // if water level > baseline/bandgap voltage
-    if(adc_read(0x00) > analogRead(INTERNAL1V1)){
+    // if water level > threshold
+    if((currentState == ERROR) && (adc_read(0x00) > WATER_THRESH)){
         currentState = IDLE;
     }
 
