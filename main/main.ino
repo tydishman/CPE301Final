@@ -143,8 +143,6 @@ void setup(){
     currentState = DISABLED;
 }
 void loop(){    
-    lcd.setCursor(0, 0);
-    lcd.print("Hellow");
     waterLevelCheck();
     temperatureCheck();
     ventCheck();
@@ -164,13 +162,13 @@ void loop(){
     {
     case DISABLED:
         fanControl(false);
-        // lcd.clear();
+        lcd.clear();
 
         // Serial.println("DISABLED");
         break;
     case IDLE:
         fanControl(false);
-        // displayMonitoring(humidity, temperature);
+        displayMonitoring(humidity, temperature);
 
         // Serial.println("IDLE");
         break;
@@ -181,7 +179,7 @@ void loop(){
         break;
     case RUNNING:
         fanControl(true);
-        // displayMonitoring(humidity, temperature);
+        displayMonitoring(humidity, temperature);
 
         // Serial.println("RUNNING");
         break;
@@ -198,11 +196,11 @@ void loop(){
         – Stop button should turn fan motor off (if on) and system should go to DISABLED state
         */
 
-        // if(millis() - lastMillis >= 60000){
-        //     lastMillis = millis();
-        //     // Update LCD screen
-        //     // displayMonitoring(humidity, temperature);
-        // }
+        if(millis() - lastMillis >= 60000){
+            lastMillis = millis();
+            // Update LCD screen
+            displayMonitoring(humidity, temperature);
+        }
     }
 
     // myStepper.setSpeed(15);
@@ -416,9 +414,9 @@ void customPrintFunc(String s, int stringLength){
 void displayMonitoring(float h, float t){
     lcd.clear();
     lcd.setCursor(0,0);
-    // lcd.print("Humidity: " + h);
+    lcd.print("Humidity: " + h);
     lcd.setCursor(1,0);
-    // lcd.print("Temp: " + t);
+    lcd.print("Temp: " + t);
 }
 
 void adc_init()
