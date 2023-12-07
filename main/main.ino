@@ -90,6 +90,7 @@ volatile unsigned char *myPORTE = (unsigned char*) 0x2E;
 volatile unsigned char *myDDRE = (unsigned char*) 0x2D;
 volatile unsigned char *myPINE = (unsigned char*) 0x2C;
 
+// PB0:1 will be used for the fan controller
 volatile unsigned char *myPORTB = (unsigned char*) 0x25;
 volatile unsigned char *myDDRB = (unsigned char*) 0x24;
 volatile unsigned char *myPINB = (unsigned char*) 0x23;
@@ -113,8 +114,9 @@ volatile unsigned char *mySREG = (unsigned char*)0x3f;
 
 volatile State currentState; // global variable to indicate what state the program is currently in
 volatile bool stateChange = true; // global variable to indicate a state change has occurred
-const float TEMP_THRESH = 21.0; // the threshold for the temperature sensor, idk what to set at initially. This will be unable to change via hardware, and recompilation is required to reset this threshold
-const int WATER_THRESH = 250;
+const float TEMP_THRESH = 15.0; // the threshold for the temperature sensor, idk what to set at initially. This will be unable to change via hardware, and recompilation is required to reset this threshold
+const int WATER_THRESH = 100;
+unsigned long lastMillis = 0;
 
 
 void setup(){
@@ -123,7 +125,7 @@ void setup(){
 
     *myDDRE &= 0b11000111; // PE3:5 as inputs
 
-    *myDDRB &= 0b00111111; //PB6:7 as inputs 
+    *myDDRB &= 0b00111111; //PB6:7 as inputs , PB0:1 are outputs (fan controller)
     
     *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
     *myEIMSK |= 0b00110000;
@@ -154,7 +156,9 @@ void loop(){
 
     if(stateChange){
         enableDisableInterrupts(currentState);
-        
+
+        // report this state change to the serial monitor using the RTC time
+
         stateChange = false;
     }
 
@@ -162,12 +166,24 @@ void loop(){
     switch (currentState)
     {
     case DISABLED:
+        fanControl(false);
+
+        // Serial.println("DISABLED");
         break;
     case IDLE:
+        fanControl(false);
+
+        // Serial.println("IDLE");
         break;
     case ERROR:
+        fanControl(false);
+
+        // Serial.println("ERROR");
         break;
     case RUNNING:
+        fanControl(true);
+
+        // Serial.println("RUNNING");
         break;
     
     default:
@@ -181,6 +197,12 @@ void loop(){
         – System should respond to changes in vent position control
         – Stop button should turn fan motor off (if on) and system should go to DISABLED state
         */
+
+        if(millis() - lastMillis >= 60000){
+            lastMillis = millis();
+            // Update LCD screen
+            // displayMonitoring(humidity, temperature);
+        }
     }
 
     // myStepper.setSpeed(15);
@@ -299,7 +321,7 @@ void waterLevelCheck(){
 void temperatureCheck(){
     Serial.print("Temp: ");
     Serial.println(temperature);
-    Serial.print("Humidity: ");
+    // Serial.print("Humidity: ");
     Serial.println(humidity);
 
     if((currentState == IDLE) && (temperature > TEMP_THRESH)){
@@ -484,7 +506,17 @@ void bigStep(bool open){
     }
 }
 
-
+// Fan function
+void fanControl(bool on){
+    if(on){
+        *myPORTB |= 0b00000001;
+        *myPORTB &= 0b11111101;
+    }
+    else{
+        *myPORTB &= 0b11111100;
+    }
+    // PB1 always kept low; no need for bi-directional fan
+}
 
 // // for the merge later when the 1 minute timer interrupts:
 // lcd.print("Humidity: " + humidity + "\n" + "Temp: " + temp);
