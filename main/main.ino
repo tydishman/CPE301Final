@@ -174,6 +174,9 @@ void loop(){
         break;
     case ERROR:
         fanControl(false);
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("ERROR");
 
         // Serial.println("ERROR");
         break;
@@ -414,9 +417,13 @@ void customPrintFunc(String s, int stringLength){
 void displayMonitoring(float h, float t){
     lcd.clear();
     lcd.setCursor(0,0);
-    lcd.print("Humidity: " + h);
+    lcd.print("Humidity: ");
+    lcd.setCursor(0, 10);
+    lcd.print(h);
     lcd.setCursor(1,0);
-    lcd.print("Temp: " + t);
+    lcd.print("Temp: ");
+    lcd.setCursor(1, 6);
+    lcd.print(t);
 }
 
 void adc_init()
