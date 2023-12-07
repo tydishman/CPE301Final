@@ -12,7 +12,6 @@
 TODO:
 - RTC module
 - LCD display
-- Servo motor/fan
  Matt's temp sensor
 
 */
@@ -128,8 +127,8 @@ void setup(){
 
     *myDDRB &= 0b00111111; //PB6:7 as inputs , PB0:1 are outputs (fan controller)
     
-    *myEICRB |= 0b00001100; // rising edge on the interrupt button does interrupt
-    // *myEIMSK |= 0b00110000;
+    *myEICRB |= 0b00001111; // rising edge on the interrupt button does interrupt
+    *myEIMSK |= 0b00110000;
     // U0Init(9600); //initializes UART w/ 9600 baud
     Serial.begin(9600);
     
@@ -168,11 +167,13 @@ void loop(){
     {
     case DISABLED:
         fanControl(false);
+        lcd.clear();
 
         // Serial.println("DISABLED");
         break;
     case IDLE:
         fanControl(false);
+        displayMonitoring(humidity, temperature);
 
         // Serial.println("IDLE");
         break;
@@ -183,6 +184,7 @@ void loop(){
         break;
     case RUNNING:
         fanControl(true);
+        displayMonitoring(humidity, temperature);
 
         // Serial.println("RUNNING");
         break;
@@ -233,7 +235,6 @@ Color driveLED(State currState){
         *myPORTA &= 0b11110001; // turn other colors off
 
         *myPORTA |= 0b00000001; // set yellow LED
-        lcd.clear();
         break;
     case IDLE:
         // Green LED on
@@ -241,7 +242,6 @@ Color driveLED(State currState){
         *myPORTA &= 0b11110100;
 
         *myPORTA |= 0b00000100; // set green LED
-        displayMonitoring(humidity, temperature);
         break;
     case ERROR:
         // Red LED on
@@ -259,7 +259,6 @@ Color driveLED(State currState){
         *myPORTA &= 0b11111000;
 
         *myPORTA |= 0b00001000; // set blue LED
-        displayMonitoring(humidity, temperature);
         break;
     }
 }
@@ -339,10 +338,10 @@ void ventCheck(){
         return;
     }
 
-    if(*myPINB & 0b00000100){
+    if(*myPINB & 0b01000000){
         bigStep(true);
     }
-    else if(*myPINB & 0b00001000){
+    else if(*myPINB & 0b10000000){
         bigStep(false);
     }
 }
@@ -367,9 +366,10 @@ ISR(INT5_vect){
 ISR(INT4_vect){ 
     char statusReg = *mySREG;
 
-    // if water level > threshold
-    if((currentState == ERROR) && (adc_read(0x00) > WATER_THRESH)){
-        currentState = IDLE;
+    // if water level >= threshold
+    if((currentState == ERROR)){ //  && (adc_read(0x00) >= WATER_THRESH)
+        currentState = DISABLED;
+        stateChange = true;
     }
 
     *mySREG = statusReg;
