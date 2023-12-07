@@ -105,7 +105,7 @@ volatile unsigned char* my_ADCSRA = (unsigned char*) 0x7A;
 volatile unsigned int* my_ADC_DATA = (unsigned int*) 0x78;
 
 //LCD Pins and Arduino Pins MIGHT NEED TO CHANGE
-const int RS = 11, EN = 12, D4 = 2, D5 = 3, D6 = 4, D7 = 5;
+const int RS = 30, EN = 31, D4 = 32, D5 = 33, D6 = 34, D7 = 35;
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 
 // Status register
@@ -143,6 +143,8 @@ void setup(){
     currentState = DISABLED;
 }
 void loop(){    
+    lcd.setCursor(0, 0);
+    lcd.print("Hellow");
     waterLevelCheck();
     temperatureCheck();
     ventCheck();
