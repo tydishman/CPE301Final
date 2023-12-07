@@ -8,6 +8,11 @@
 // https://ww1.microchip.com/downloads/en/devicedoc/atmel-2549-8-bit-avr-microcontroller-atmega640-1280-1281-2560-2561_datasheet.pdf
 
 
+// PROJECT DELIVERABLE LINK //
+// https://docs.google.com/document/d/1Zz8_r925z1ssLB7JXb_pX80VczjSrMZtFJcOyECdHFM/edit?usp=sharing
+
+
+
 /*
 TODO:
 - RTC module
@@ -348,15 +353,29 @@ void temperatureCheck(){
     }
 }
 void ventCheck(){
+    static bool alreadyPrinted = false;
     if(currentState == ERROR){
         return;
     }
 
     if(*myPINB & 0b01000000){
         bigStep(true);
+
+        if(!alreadyPrinted){
+            customPrintFunc("Vent opening\n", 14);
+            alreadyPrinted = true;
+        }
     }
     else if(*myPINB & 0b10000000){
         bigStep(false);
+
+        if(!alreadyPrinted){
+            customPrintFunc("Vent closing\n", 14);
+            alreadyPrinted = true;
+        }
+    }
+    else{
+        alreadyPrinted = false;
     }
 }
 
