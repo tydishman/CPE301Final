@@ -418,11 +418,11 @@ void displayMonitoring(float h, float t){
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Humidity: ");
-    lcd.setCursor(0, 10);
+    lcd.setCursor(10, 0);
     lcd.print(h);
-    lcd.setCursor(1,0);
+    lcd.setCursor(0, 1);
     lcd.print("Temp: ");
-    lcd.setCursor(1, 6);
+    lcd.setCursor(6, 1);
     lcd.print(t);
 }
 
