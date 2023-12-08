@@ -173,7 +173,7 @@ void loop(){
         break;
     case IDLE:
         fanControl(false);
-        displayMonitoring(humidity, temperature);
+        //displayMonitoring(humidity, temperature);
 
         // Serial.println("IDLE");
         break;
@@ -187,7 +187,7 @@ void loop(){
         break;
     case RUNNING:
         fanControl(true);
-        displayMonitoring(humidity, temperature);
+        //displayMonitoring(humidity, temperature);
 
         // Serial.println("RUNNING");
         break;
@@ -245,6 +245,7 @@ Color driveLED(State currState){
         *myPORTA &= 0b11110100;
 
         *myPORTA |= 0b00000100; // set green LED
+        displayMonitoring(humidity, temperature);
         break;
     case ERROR:
         // Red LED on
@@ -262,6 +263,7 @@ Color driveLED(State currState){
         *myPORTA &= 0b11111000;
 
         *myPORTA |= 0b00001000; // set blue LED
+        displayMonitoring(humidity, temperature);
         break;
     }
 }
