@@ -322,6 +322,7 @@ void enableDisableInterrupts(State currState){
     // report time automatically writes a newline after
 }
 
+//Checking Functions 
 void waterLevelCheck(){
     int chk = DHT.read11(DHT11_PIN);
     temperature = DHT.temperature;
@@ -379,7 +380,7 @@ void ventCheck(){
     }
 }
 
-
+//Button Interrupts
 // external interrupt for a rising edge on INT5 (D3) (this will be the START/STOP button)
 ISR(INT5_vect){ 
     char statusReg = *mySREG;
@@ -428,15 +429,12 @@ void U0Init(int U0baud){
     *myUSCR0C = 0x06;
     *myUBBR0 = tbaud;
 }
-
 unsigned char kbhit(){
     return *myUCSR0A & RDA;
 }
-
 unsigned char getChar(){
     return *myUDR0;
 }
-
 void putChar(unsigned char U0data){
     while((*myUCSR0A & TBE) == 0);
     *myUDR0 = U0data;
@@ -449,6 +447,7 @@ void customPrintFunc(String s, int stringLength){
     }
 }
 
+//Function to display the humidity and temperature on the LCD
 void displayMonitoring(float h, float t){
     lcd.clear();
     lcd.setCursor(0,0);
@@ -461,6 +460,8 @@ void displayMonitoring(float h, float t){
     lcd.print(t);
 }
 
+//ADC Functions
+//Function to initialize the ADC
 void adc_init()
 {
   // setup the A register
@@ -477,7 +478,7 @@ void adc_init()
   *my_ADMUX  &= 0b11011111; // clear bit 5 to 0 for right adjust result
   *my_ADMUX  &= 0b11100000; // clear bit 4-0 to 0 to reset the channel and gain bits
 }
-
+//Function to read from the ADC
 unsigned int adc_read(unsigned char adc_channel_num)
 {
   // clear the channel selection bits (MUX 4:0)
@@ -502,8 +503,8 @@ unsigned int adc_read(unsigned char adc_channel_num)
   return *my_ADC_DATA;
 }
 
-//Clock function: prints the real time using the DS1307 RTC, in hours:minutes:seconds
-//FOR THIS TO WORK INITAL CLOCK SET NEEDS TO RUN, SHOULD ONLY HAVE TO HAPPEN ONCE EVER, RUN timerInitializationCode
+//Real-Time Clock Functions
+//Prints the real time using the DS1307 RTC, in hours:minutes:seconds
 void reportTime(){
     tmElements_t tm;
     
@@ -516,8 +517,7 @@ void reportTime(){
         putChar('\n');
     }
 }
-
-//Clock function: takes the number of hours, minutes, seconds, and separates the two numbers, converts to char, and then sents them through the UART. 
+//Takes the number of hours, minutes, seconds, and separates the two numbers, converts to char, and then sents them through the UART. 
 void print2digits(int number) {
   if (number >= 0 && number < 10) {
     putChar('0');
@@ -534,7 +534,7 @@ void print2digits(int number) {
   }
 }
 
-//Stepper function 
+//Stepper function
 void bigStep(bool open){
     myStepper.setSpeed(10);
     if(open){
@@ -559,19 +559,7 @@ void fanControl(bool on){
     // PB1 always kept low; no need for bi-directional fan
 }
 
-// // for the merge later when the 1 minute timer interrupts:
-// lcd.print("Humidity: " + humidity + "\n" + "Temp: " + temp);
-// //or
-// lcd.setCursor(0,0);
-// lcd.print("Humidity: " + humidity);
-// lcd.setCursor(1,0);
-// lcd.print("Temp: " + temperature);
 
-// /* How do we want to tackle state transitions?
 
-// Interrupts?
-// Like use the comparator interrupts to see if, for example, the water level is less than the threshold, and if so, during the interrupt we set the current state to ERROR
-// The purpose of this would be to avoid polling? 
 
-// */
 // #include <this is here for the error squiggles>
