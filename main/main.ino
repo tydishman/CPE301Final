@@ -11,17 +11,6 @@
 // PROJECT DELIVERABLE LINK //
 // https://docs.google.com/document/d/1Zz8_r925z1ssLB7JXb_pX80VczjSrMZtFJcOyECdHFM/edit?usp=sharing
 
-
-
-/*
-TODO:
-- RTC module
-- LCD display
- Matt's temp sensor
-
-*/
-
-
 enum State {
     DISABLED,
     IDLE,
@@ -41,8 +30,6 @@ float humidity, temperature, water_level;
 #include <LiquidCrystal.h>
 #include <Stepper.h>
 #include <dht.h>
-
-//INCLUDES FOR CLOCK, NEED TO DOWNLOAD ARDUINO LIBRARIES: Time and DS1307RTC
 #include <Wire.h>
 #include <TimeLib.h>
 #include <DS1307RTC.h>
@@ -55,7 +42,6 @@ dht DHT;
 const int stepsPerRev = 2038;
 Stepper myStepper = Stepper(stepsPerRev, 8, 10, 9, 11);
 
-//This here declaration shouldn't be necessary, but if clock doesn't work, uncomment this line
 tmElements_t tm;
 
 //UART Definitions 
@@ -72,33 +58,27 @@ volatile unsigned char *myUDR0 = (unsigned char*)0x00C6;
 // Analog Comparator registers
 volatile unsigned char *myACSR = (unsigned char*) 0x50; // the analog comparator status register
 volatile unsigned char *myDIDR1 = (unsigned char*) 0x7F;
-// AC notes:
-/*
-The internal "bandgap" reference of 1.1 volts will be used as the threshold for the water. If this turns out to not be good enough, another solution will need to be used
-*/
-
 
 // External interrupt control registers
 volatile unsigned char *myEICRB = (unsigned char*)0x6A;
 volatile unsigned char *myEIMSK = (unsigned char*)0x3D;
 
-// LED pins
+// LED pins: PA0:3 will be used for the LEDs
 volatile unsigned char *myPORTA = (unsigned char*) 0x22;
 volatile unsigned char *myDDRA = (unsigned char*) 0x21;
 volatile unsigned char *myPINA = (unsigned char*) 0x20;
-// PA0:3 will be used for the LEDs
-// Yellow, Red, Green. Blue
 
-//Button Pin
+//Start/Stop and Reset Button Pins
 volatile unsigned char *myPORTE = (unsigned char*) 0x2E;
 volatile unsigned char *myDDRE = (unsigned char*) 0x2D;
 volatile unsigned char *myPINE = (unsigned char*) 0x2C;
 
-// PB0:1 will be used for the fan controller
+//Fan Controller Buttons: PB0-1
 volatile unsigned char *myPORTB = (unsigned char*) 0x25;
 volatile unsigned char *myDDRB = (unsigned char*) 0x24;
 volatile unsigned char *myPINB = (unsigned char*) 0x23;
 
+//Water Sensor Pins
 volatile unsigned char *myPORTF = (unsigned char*) 0x31;
 volatile unsigned char *myDDRF = (unsigned char*) 0x30;
 volatile unsigned char *myPINF = (unsigned char*) 0x2F;
@@ -109,7 +89,7 @@ volatile unsigned char* my_ADCSRB = (unsigned char*) 0x7B;
 volatile unsigned char* my_ADCSRA = (unsigned char*) 0x7A;
 volatile unsigned int* my_ADC_DATA = (unsigned int*) 0x78;
 
-//LCD Pins and Arduino Pins MIGHT NEED TO CHANGE
+//LCD Pins
 const int RS = 30, EN = 31, D4 = 32, D5 = 33, D6 = 34, D7 = 35;
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 
@@ -118,15 +98,15 @@ volatile unsigned char *mySREG = (unsigned char*)0x3f;
 
 volatile State currentState; // global variable to indicate what state the program is currently in
 volatile bool stateChange = true; // global variable to indicate a state change has occurred
-const float TEMP_THRESH = 18.0; // the threshold for the temperature sensor, idk what to set at initially. This will be unable to change via hardware, and recompilation is required to reset this threshold
-const int WATER_THRESH = 100;
-unsigned long lastMillis = 0;
+const float TEMP_THRESH = 19.0; // the threshold for the temperature sensor
+const int WATER_THRESH = 100; // the threshold for the water sensor
+unsigned long lastMillis = 0; // global variable for time measurement for the minute delay
 
 
 void setup(){
     *mySREG |= 0b10000000; // enables global interrupts
     *myDDRA |= 0b00001111; // sets those pins as outputs
-    *myDDRF &= 0b11111110;
+    *myDDRF &= 0b11111110; // pf0 as input 
 
     *myDDRE &= 0b11000111; // PE3:5 as inputs
 
@@ -135,13 +115,10 @@ void setup(){
     *myEICRB |= 0b00001111; // rising edge on the interrupt button does interrupt
     *myEIMSK |= 0b00110000;
     U0Init(9600); //initializes UART w/ 9600 baud
-    // Serial.begin(9600);
     
     lcd.begin(16, 2); //initializes LCD, 16 columns, 2 rows
     lcd.setCursor(0, 0);
 
-
-    // *myACSR |= 0b01001010; // sets bandgap reference, enables interrupts, and does comparator interrupt on falling edge
     *myACSR |= 0b10000000; // disable analog comparator
 
     adc_init();
@@ -153,12 +130,8 @@ void loop(){
     temperatureCheck();
     ventCheck();
 
-
     if(stateChange){
         enableDisableInterrupts(currentState);
-
-        // report this state change to the serial monitor using the RTC time
-
         stateChange = false;
     }
 
@@ -168,28 +141,18 @@ void loop(){
     case DISABLED:
         fanControl(false);
         lcd.clear();
-
-        // Serial.println("DISABLED");
         break;
     case IDLE:
         fanControl(false);
-        //displayMonitoring(humidity, temperature);
-
-        // Serial.println("IDLE");
         break;
     case ERROR:
         fanControl(false);
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("ERROR");
-
-        // Serial.println("ERROR");
         break;
     case RUNNING:
         fanControl(true);
-        //displayMonitoring(humidity, temperature);
-
-        // Serial.println("RUNNING");
         break;
     
     default:
@@ -198,34 +161,12 @@ void loop(){
     driveLED(currentState);
     // ALL STATES OTHER THAN DISABLED
     if(currentState != DISABLED){
-        /*
-        – Humidity and temperature should be continuously monitored and reported on the LCD screen. Updates should occur once per minute.
-        – System should respond to changes in vent position control
-        – Stop button should turn fan motor off (if on) and system should go to DISABLED state
-        */
-
         if(millis() - lastMillis >= 60000){
             lastMillis = millis();
             // Update LCD screen
             displayMonitoring(humidity, temperature);
         }
     }
-
-    // myStepper.setSpeed(15);
-
-    // Serial.println("POS");
-    // myStepper.step(stepsPerRev);
-
-    // Serial.println("NEG");
-    // myStepper.step(-stepsPerRev);
-
-    // ALL STATES
-    /*
-    * The realtime clock must be used to report (via the Serial port) the time of each state transition, and any changes to the stepper motor position for the vent.
-    */
-
-//    bigStep(true);
-
 }
 
 // Helper functions
@@ -234,31 +175,24 @@ Color driveLED(State currState){
     {
     case DISABLED:
         // Yellow LED on
-        // Serial.println("DISABLED: Yellow");
         *myPORTA &= 0b11110001; // turn other colors off
 
         *myPORTA |= 0b00000001; // set yellow LED
         break;
     case IDLE:
         // Green LED on
-        // Serial.println("IDLE: Green");
         *myPORTA &= 0b11110100;
 
         *myPORTA |= 0b00000100; // set green LED
         break;
     case ERROR:
         // Red LED on
-        // Serial.println("ERROR: Red");
         *myPORTA &= 0b11110010;
 
         *myPORTA |= 0b00000010; // set red LED
-        // lcd.clear();
-        // lcd.setCursor(0, 0);
-        // lcd.print("ERROR");
         break;
     case RUNNING:
         // Blue LED on
-        // Serial.println("RUNNING: Blue");
         *myPORTA &= 0b11111000;
 
         *myPORTA |= 0b00001000; // set blue LED
@@ -271,8 +205,6 @@ void enableDisableInterrupts(State currState){
     switch (currState)
     {
     case DISABLED:
-        // disable threshold interrupt (comparator interrupt)
-        // *myACSR &= 0b11110111;
         // START/stop button interrupt enable
         *myEIMSK |= 0b00100000;
         // reset button interrupt disable
@@ -282,8 +214,6 @@ void enableDisableInterrupts(State currState){
 
         break;
     case IDLE:
-        // enable threshold interrupt (comparator interrupt)
-        // *myACSR |= 0b00001000;
         // start/STOP button interrupt enable
         *myEIMSK |= 0b00100000;
         // reset button interrupt disable
@@ -294,8 +224,6 @@ void enableDisableInterrupts(State currState){
 
         break;
     case ERROR:
-        // enable threshold interrupt (comparator interrupt)
-        // *myACSR &= 0b11110111;
         // start/STOP button interrupt enable
         *myEIMSK |= 0b00100000;
         // reset button interrupt enable
@@ -305,8 +233,6 @@ void enableDisableInterrupts(State currState){
 
         break;
     case RUNNING:
-        // enable threshold interrupt (comparator interrupt)
-        // *myACSR |= 0b00001000;
         // start/STOP button interrupt enable
         *myEIMSK |= 0b00100000;
         // reset button interrupt disable
@@ -331,8 +257,6 @@ void waterLevelCheck(){
     humidity = DHT.humidity;
     
     water_level = adc_read(0x00);
-    // Serial.print("Water level: ");
-    // Serial.println(water_level);
     if(currentState == IDLE || currentState == RUNNING){
         if(water_level < WATER_THRESH){
             currentState = ERROR;
@@ -341,11 +265,6 @@ void waterLevelCheck(){
     }
 }
 void temperatureCheck(){
-    // Serial.print("Temp: ");
-    // Serial.println(temperature);
-    // Serial.print("Humidity: ");
-    // Serial.println(humidity);
-
     if((currentState == IDLE) && (temperature > TEMP_THRESH)){
         currentState = RUNNING;
         stateChange = true;
@@ -410,16 +329,6 @@ ISR(INT4_vect){
 
     *mySREG = statusReg;
 }
-
-// // interrupt for analog comparator (AIN0 is +, AIN1 is -); when AIN0 > AIN1, ACO is set. Interrupt can be configured to trigger on output rise, fall, or TOGGLE in this case
-// ISR(ANALOG_COMP_vect){
-//     char statusReg = *mySREG;
-
-//     currentState = ERROR;
-//     stateChange = true;
-
-//     *mySREG = statusReg;
-// }
 
 //Functions for the UART
 void U0Init(int U0baud){
@@ -540,11 +449,9 @@ void print2digits(int number) {
 void bigStep(bool open){
     myStepper.setSpeed(10);
     if(open){
-        // Serial.println("OPEN");
         myStepper.step(-stepsPerRev/36);
     }
     else{
-        // Serial.println("CLOSE");
         myStepper.step(stepsPerRev/36);
     }
 }
@@ -560,8 +467,3 @@ void fanControl(bool on){
     }
     // PB1 always kept low; no need for bi-directional fan
 }
-
-
-
-
-// #include <this is here for the error squiggles>
