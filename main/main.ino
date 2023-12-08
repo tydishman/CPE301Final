@@ -245,7 +245,6 @@ Color driveLED(State currState){
         *myPORTA &= 0b11110100;
 
         *myPORTA |= 0b00000100; // set green LED
-        displayMonitoring(humidity, temperature);
         break;
     case ERROR:
         // Red LED on
@@ -263,7 +262,6 @@ Color driveLED(State currState){
         *myPORTA &= 0b11111000;
 
         *myPORTA |= 0b00001000; // set blue LED
-        displayMonitoring(humidity, temperature);
         break;
     }
 }
@@ -292,6 +290,7 @@ void enableDisableInterrupts(State currState){
         *myEIMSK &= 0b11101111;
 
         customPrintFunc("IDLE", 4);
+        displayMonitoring(humidity, temperature);
 
         break;
     case ERROR:
@@ -314,6 +313,7 @@ void enableDisableInterrupts(State currState){
         *myEIMSK &= 0b11101111;
 
         customPrintFunc("RUNNING", 8);
+        displayMonitoring(humidity, temperature);
 
         break;
     default:
