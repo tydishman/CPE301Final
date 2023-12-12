@@ -1,6 +1,6 @@
-Group Members: Tyler Dishman and Matthew Gaskell
-Assignment: CPE 301 Final Project
-Date: 12/15/2023
+# CPE 301 Final Project
+### Group Members: Tyler Dishman and Matthew Gaskell
+### Date: 12/15/2023
 
 *The repository has two videos, one that demonstrates our circuit working with all of the states and components, the other that gives an overview of the different components that make up our circuit. For the highest quality versions of those videos, please refer to the drive links in the design document.*
 
