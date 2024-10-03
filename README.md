@@ -1,8 +1,10 @@
-# CPE 301 Final Project
+# Evaporative Swamp Cooler
 ### Group Members: Tyler Dishman and Matthew Gaskell
 ### Due Date: 12/15/2023
 
 *The repository has two videos in the Circuit Videos file, one that demonstrates our circuit working with all of the states and components, the other that gives an overview of the different components that make up our circuit. For the highest quality versions of those videos, please refer to the drive links in the design document.*
+
+This project was assigned as the final for CPE301 (Embedded Systems Design).
 
 Our project was to build and code an Arduino circuit that contained a temperature and humidity sensor, a water sensor, a vent with a motor to open and close it, with button controls, a motor with a fan attached, an LCD display for readings, a real-time clock, and LEDs which display a different color for each of the four different states that the circuit can be in. This is also displayed, with the time, in the serial monitor. 
 
